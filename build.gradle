@@ -1,0 +1,60 @@
+plugins {
+  id 'java'
+  id 'application'
+  id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
+sourceCompatibility = '1.8'
+project.buildDir = 'target'
+
+repositories {
+  mavenCentral()
+  jcenter()
+}
+
+dependencies {
+  compile group: 'org.apache.spark', name: 'spark-core_2.12', version: '2.4.4'
+  compile group: 'org.apache.spark', name: 'spark-sql_2.12', version: '2.4.4'
+
+  compile group: 'com.google.inject', name: 'guice', version: '4.0'
+
+  compile group: 'org.apache.commons', name: 'commons-text', version: '1.8'
+
+  compile group: 'com.typesafe', name: 'config', version: '1.4.0'
+
+  compile 'com.madgag.spongycastle:core:1.58.0.0'
+
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.5.2'
+  testCompile "org.mockito:mockito-core:2.21.0"
+}
+
+test {
+  useJUnitPlatform()
+  testLogging {
+    events 'passed', 'skipped', 'failed'
+  }
+  testLogging.showStandardStreams = true
+
+  jvmArgs '-Duser.timezone=UTC -Dconfig.trace=loads -Dconfig.override_with_env_vars=true'
+}
+
+application {
+  mainClassName = 'tasks.MerkleRootCalculatorTask'
+}
+
+shadowJar {
+  zip64 true
+}
+
+jar {
+  zip64 true
+
+  manifest {
+    attributes "Main-Class": application.mainClassName
+  }
+
+  from {
+    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+  }
+
+  exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
+}
